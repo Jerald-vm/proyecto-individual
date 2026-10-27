@@ -1,0 +1,35 @@
+---
+title: "Proyecto Individual"
+format: html
+editor: visual
+---
+
+cargar librerias:
+```{r, message=FALSE}
+library(tidyverse)
+library(knitr)
+library(pdftools)
+library(readxl)
+```
+
+extraccion de datos usando pdftools:
+```{r}
+datos.icafe <- pdf_text("Informe Actividad Cafetalera.pdf")
+datos.detallados <- pdf_data("Informe Actividad Cafetalera.pdf")
+```
+
+agregando los datos:
+```{r}
+datos.NASA <- read_excel("~/UCR/VI semestre/herramientas I/Proyecto individual/config/datosNasa.xlsx")
+```
+
+```{r}
+datos.CPC <- pdf_text("/Climate Prediction Center - Relative Oceanic Niño Index (RONI).pdf")
+```
+```{r}
+datos.comunicaciones <- pdf_text("Ramirez Caficultura desde Costa Rica.pdf")
+```
+
+
+
+

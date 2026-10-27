@@ -110,4 +110,5 @@ El indicador de referencia utilizado por la NOAA para el seguimiento del fenóme
 
 [^6]: Instituto Meteorológico Nacional (IMN). [Avisos Meteorológicos y Atlas Climatológico](https://www.imn.ac.cr). imn.ac.cr
 
-[^7]: Ramírez, Caficultura desde Costa Rica. [Actualización del área cafetalera nacional](https://ramirezcaficulturadesdecostarica.com/ct-191), con base en datos del ICAFE.
+# [^7]: Ramírez, Caficultura desde Costa Rica. [Actualización del área cafetalera nacional](https://ramirezcaficulturadesdecostarica.com/ct-191), con base en datos del ICAFE.
+[^8] https://www.imn.ac.cr/web/imn/pronostico-climatico
