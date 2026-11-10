@@ -1,51 +1,78 @@
 ---
-title: "Proyecto Individual"
-format: html
-editor: visual
+lang: es
+format:
+  pdf:
+    documentclass: article
+    papersize: letter
+    geometry: margin=2cm
+    toc: false
+    number-sections: false
+    fontsize: 12pt
+    fig-pos: "H"
+header-includes: |
+  \usepackage{titlesec}
+  \titleformat{\section}{\normalfont\bfseries\normalsize}{}{0pt}{}
+  \titleformat{\subsection}{\normalfont\bfseries\normalsize}{}{0pt}{}
+  \titleformat{\subsubsection}{\normalfont\bfseries\normalsize}{}{0pt}{}
+  % float + fig-pos "H": clava las figuras donde están escritas y pone el
+  % título arriba. NO agregar floatrow: es incompatible con float.
+  \usepackage{float}
+  \floatstyle{plaintop}
+  \restylefloat{figure}
+  % Centra las tablas en la página.
+  \setlength{\LTleft}{0pt plus 1fill}
+  \setlength{\LTright}{0pt plus 1fill}
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
-cargar librerias:
+
+RMSE
+MAE
+R^2
+
+
+# Portada
+
+# Introduccion
+
+# Objetivos
+
+## Objetivo General
+
+## Objetivos especificos
+
+# Metodologia
+
+### regresion lineal
+
+### regresion ridge
+
+### arbol de regresion
+
+# codigo extraccion de datos
 
 ```{r, message=FALSE}
 library(tidyverse)
 library(knitr)
 library(pdftools)
 library(readxl)
-```
-
-extraccion de datos usando pdftools:
-
-```{r}
  pdf <- "../data/Informe Actividad Cafetalera.pdf"
 # file.exists(pdf)  # debería dar TRUE
+# extraccion de datos usando pdftools:
 datos.icafe <- pdf_text(pdf)
-datos.icafe
-```
-
-agregando los datos:
-
-```{r}
+#agregando los datos:
 datos.NASA <- read_excel("~/UCR/VI semestre/herramientas I/Proyecto individual/config/datosNasa.xlsx",
              sheet = 1,
   skip = 11,
   na = "-999"
 ) |>
   mutate(YEAR = as.integer(YEAR))
-
-```
-
-```{r}
-
 datos.CPC <- pdf_text("../data/Climate Prediction Center - Relative Oceanic Niño Index (RONI).pdf")
-```
-
-```{r}
 datos.comunicaciones <- pdf_text("../data/Ramirez Caficultura desde Costa Rica.pdf")
-```
-
-
-extraccion de datos de fanegas:
-```{r}
+#extraccion de datos de fanegas:
 # Revisa el texto extraído de la página 88
 cat(datos.icafe[[88]])
 
@@ -72,13 +99,7 @@ produccion <- map_dfr(campos, function(x) {
   )
 })
 
-View(produccion)
-
-
-```
-precipitacion y temperatura:
-
-```{r}
+#precipitacion y temperatura:
 clima <- datos.NASA |>
   pivot_longer(
     cols = all_of(c("APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT")),
@@ -93,10 +114,7 @@ clima <- datos.NASA |>
     lluvia_promedio_mm_dia = PRECTOTCORR,
     temperatura_promedio_c = T2M
   )
-```
-
-relacionando con la cosecha:
-```{r}
+#relacionando con la cosecha:
 datos_modelo <- produccion |>
   mutate(anio = as.integer(str_sub(cosecha, 1, 4))) |>
   left_join(clima, by = "anio") |>
@@ -104,20 +122,79 @@ datos_modelo <- produccion |>
   mutate(produccion_anterior = lag(produccion_fanegas))
 
 View(datos_modelo)
-```
 
 
-```{r}
 glimpse(datos_modelo)
 
 colSums(is.na(datos_modelo))
 
 range(datos_modelo$anio, na.rm = TRUE)
 ```
+# codigo modelo
+
+## regresion lineal (RL)
+
+```{r}
+#calculo.lineal <- function()
+```
+
+## regresion ridge (RR)
+
+```{r}
+#calculo.ridge <- function()
+```
+
+## arbol de regresion (AR)
+
+```{r}
+#calculo.arbol <- function()
+```
+
+
+# Resultados
+
+```{r}
+tabla_totales <- datos_modelo %>% 
+  select(
+  cosecha = cosecha,
+  "produccion real" = produccion_fanegas,
+ # "Produccion RL" = calculo.lineal,
+#  "Produccion RR" = calculo.ridge,
+ # "Produccion AR" = calculo.arbol
+)
+kable(tabla_totales)
+```
+
+
+# Bibliografia
+
+Instituto del Café de Costa Rica (ICAFE). [Informe sobre la Actividad Cafetalera de Costa Rica](https://www.icafe.cr/wp-content/uploads/informacion_mercado/informes_actividad/actual/Informe%20Actividad%20Cafetalera.pdf) (ediciones 2022-2025). icafe.cr
+
+Organización Internacional del Café (OIC), USDA, StoneX Group, Volcafe Holding Ltd. — citados como fuentes de estimación de cosecha mundial en el Informe sobre la Actividad Cafetalera del ICAFE.
+
+Estándar internacional de medida cafetalera: saco de 60 kg, utilizado por la Organización Internacional del Café (OIC) y el USDA.
+
+NASA Langley Research Center — POWER Project. [Monthly and Annual API Documentation](https://power.larc.nasa.gov/docs/services/api/temporal/monthly/). power.larc.nasa.gov
+
+NOAA, Climate Prediction Center. [Relative Oceanic Niño Index (RONI)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/) — índice oficial de monitoreo ENSO desde febrero de 2026 (reemplazó al ONI clásico). cpc.ncep.noaa.gov
+
+Instituto Meteorológico Nacional (IMN). [Avisos Meteorológicos y Atlas Climatológico](https://www.imn.ac.cr). imn.ac.cr
+
+Ramírez, Caficultura desde Costa Rica. [Actualización del área cafetalera nacional](https://ramirezcaficulturadesdecostarica.com/ct-191), con base en datos del ICAFE.
+
+https://www.imn.ac.cr/web/imn/pronostico-climatico
+
+# Anexos
+
+
+
+
+
+
+cargar librerias:
+
 
 
 ## codigo de los modelos
 
-### regresion lineal
-### regresion ridge
-### arbol de regresion
+
