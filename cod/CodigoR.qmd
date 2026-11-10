@@ -28,23 +28,37 @@ execute:
   message: false
 ---
 
+\begin{center}
+\textbf{Universidad de Costa Rica}\\
+\textbf{Curso: Herramientas de Datos I}\\[0.4em]
+\textbf{Cosecha de cafe}\\
+Predicción de la Cosecha de Café en Costa Rica mediante Modelos Estadísticos en R\\[0.35em]
+\textbf{Estudiante a cargo}\\
+Jerald Valverde Mora\\
+23 de noviembre de 2026
+\end{center}
+
+
+
+
+# Introduccion
+
+El cafe es uno de los productos agricolas mas importantes en la historia de Costa Rica, no solo por su impacto como producto, sino como componente primorial de la historia y uno de los motores economicos del pais a traves de los anos. Al ser un producto agricola, la cantidad que se produce de este esta sujeto a distintas variables que pueden cambiar a lo largo del tiempo; algunos de ellos son los factores climaticos, de mercado y la bienalidad de la planta. El cambio climatico, y los cambios en la globalizacion han dado tendencia a que las cosechas que se producen en cada temporada sean fluctuantes y tiendan a tener valores cada vez mas bajos.
+  
+La intencion de este proyecto es construir y comparar tres modelos estadisticos (regresión lineal múltiple, regresión Ridge y árbol de regresión) que estimen el volumen de la cosecha nacional de café para el periodo 2026-2027, replicando a menor escala el tipo de ejercicio de proyección que realizan agencias internacionales como StoneX, Volcafe o el USDA para el mercado cafetalero mundial (Organizacion Internacional del cafe (OIC), 2025).
+
+El proyecto utiliza datos de las cosechas de 1994 hasta 2025 extraidos del ICAFE, con base en los datos climaticos analizados y extraidos del IMN y de la NASA como parte de juntar los datos de cada temporada y asi aproximar el valor real de la cosecha tomada en fanegas (estandar nacional de medicion que equivale a 20 cajuelas de cafe, 258kg de fruta o 46kg de cafe oro).
+
+# Objetivo General
+
+Desarrollar y comparar tres modelos en R (regresión lineal , regresión Ridge y árbol de regresión) que permitan estimar el volumen de la cosecha nacional de café de Costa Rica para el periodo 2026-2027, a partir de variables climáticas, de mercado y del comportamiento histórico de la producción.
+
+# Metodologia
 
 RMSE
 MAE
 R^2
 
-
-# Portada
-
-# Introduccion
-
-# Objetivos
-
-## Objetivo General
-
-## Objetivos especificos
-
-# Metodologia
 
 ### regresion lineal
 
@@ -54,17 +68,22 @@ R^2
 
 # codigo extraccion de datos
 
-```{r, message=FALSE}
+```{r}
+#| label: datos
+#| include: false
+
+
 library(tidyverse)
 library(knitr)
 library(pdftools)
 library(readxl)
+
  pdf <- "../data/Informe Actividad Cafetalera.pdf"
-# file.exists(pdf)  # debería dar TRUE
+
 # extraccion de datos usando pdftools:
 datos.icafe <- pdf_text(pdf)
 #agregando los datos:
-datos.NASA <- read_excel("~/UCR/VI semestre/herramientas I/Proyecto individual/config/datosNasa.xlsx",
+datos.NASA <- read_excel("../config/datosNasa.xlsx",
              sheet = 1,
   skip = 11,
   na = "-999"
@@ -129,6 +148,8 @@ glimpse(datos_modelo)
 colSums(is.na(datos_modelo))
 
 range(datos_modelo$anio, na.rm = TRUE)
+
+write_csv(datos_modelo, "datos_modelo.csv")
 ```
 # codigo modelo
 
@@ -168,21 +189,17 @@ kable(tabla_totales)
 
 # Bibliografia
 
-Instituto del Café de Costa Rica (ICAFE). [Informe sobre la Actividad Cafetalera de Costa Rica](https://www.icafe.cr/wp-content/uploads/informacion_mercado/informes_actividad/actual/Informe%20Actividad%20Cafetalera.pdf) (ediciones 2022-2025). icafe.cr
+Instituto del Café de Costa Rica. (2025). Informe de la actividad cafetalera de Costa Rica 2025. [https://www.icafe.cr/wp-content/uploads/informacion_mercado/informes_actividad/actual/Informe%20Actividad%20Cafetalera.pdf](https://www.icafe.cr/wp-content/uploads/informacion_mercado/informes_actividad/actual/Informe%20Actividad%20Cafetalera.pdf)
 
-Organización Internacional del Café (OIC), USDA, StoneX Group, Volcafe Holding Ltd. — citados como fuentes de estimación de cosecha mundial en el Informe sobre la Actividad Cafetalera del ICAFE.
+Instituto Meteorológico Nacional. (s. f.). Avisos meteorológicos y atlas climatológico. Recuperado el 10 de noviembre de 2026, de [https://www.imn.ac.cr](https://www.imn.ac.cr)
 
-Estándar internacional de medida cafetalera: saco de 60 kg, utilizado por la Organización Internacional del Café (OIC) y el USDA.
+Instituto Meteorológico Nacional. (s. f.). Pronóstico climático. Recuperado el 10 de noviembre de 2026, de [https://www.imn.ac.cr/web/imn/pronostico-climatico](https://www.imn.ac.cr/web/imn/pronostico-climatico)
 
-NASA Langley Research Center — POWER Project. [Monthly and Annual API Documentation](https://power.larc.nasa.gov/docs/services/api/temporal/monthly/). power.larc.nasa.gov
+National Aeronautics and Space Administration, Langley Research Center. (s. f.). Monthly and annual API documentation. NASA POWER. Recuperado el 10 de noviembre de 2026, de [https://power.larc.nasa.gov/docs/services/api/temporal/monthly/](https://power.larc.nasa.gov/docs/services/api/temporal/monthly/)
 
-NOAA, Climate Prediction Center. [Relative Oceanic Niño Index (RONI)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/) — índice oficial de monitoreo ENSO desde febrero de 2026 (reemplazó al ONI clásico). cpc.ncep.noaa.gov
+National Oceanic and Atmospheric Administration, Climate Prediction Center. (s. f.). Relative Oceanic Niño Index (RONI). Recuperado el 10 de noviembre de 2026, de [https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/)
 
-Instituto Meteorológico Nacional (IMN). [Avisos Meteorológicos y Atlas Climatológico](https://www.imn.ac.cr). imn.ac.cr
-
-Ramírez, Caficultura desde Costa Rica. [Actualización del área cafetalera nacional](https://ramirezcaficulturadesdecostarica.com/ct-191), con base en datos del ICAFE.
-
-https://www.imn.ac.cr/web/imn/pronostico-climatico
+Ramírez. (s. f.). Actualización del área cafetalera nacional. Caficultura desde Costa Rica. [https://ramirezcaficulturadesdecostarica.com/ct-191](https://ramirezcaficulturadesdecostarica.com/ct-191)
 
 # Anexos
 
