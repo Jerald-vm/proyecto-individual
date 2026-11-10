@@ -1,0 +1,123 @@
+---
+title: "Proyecto Individual"
+format: html
+editor: visual
+---
+
+cargar librerias:
+
+```{r, message=FALSE}
+library(tidyverse)
+library(knitr)
+library(pdftools)
+library(readxl)
+```
+
+extraccion de datos usando pdftools:
+
+```{r}
+ pdf <- "../data/Informe Actividad Cafetalera.pdf"
+# file.exists(pdf)  # debería dar TRUE
+datos.icafe <- pdf_text(pdf)
+datos.icafe
+```
+
+agregando los datos:
+
+```{r}
+datos.NASA <- read_excel("~/UCR/VI semestre/herramientas I/Proyecto individual/config/datosNasa.xlsx",
+             sheet = 1,
+  skip = 11,
+  na = "-999"
+) |>
+  mutate(YEAR = as.integer(YEAR))
+
+```
+
+```{r}
+
+datos.CPC <- pdf_text("../data/Climate Prediction Center - Relative Oceanic Niño Index (RONI).pdf")
+```
+
+```{r}
+datos.comunicaciones <- pdf_text("../data/Ramirez Caficultura desde Costa Rica.pdf")
+```
+
+
+extraccion de datos de fanegas:
+```{r}
+# Revisa el texto extraído de la página 88
+cat(datos.icafe[[88]])
+
+lineas <- str_split(datos.icafe[[88]], "\n")[[1]]
+
+# Conserva las líneas que comienzan con un año de cosecha
+filas <- str_subset(lineas, "^\\s*\\d{4}-\\d{4}\\s")
+
+# La última cosecha tiene una nota al pie ("b"); quítala antes de separar columnas
+filas <- str_replace(filas, "(\\d{4}-\\d{4})\\s+[a-z*]", "\\1")
+
+campos <- str_split(str_squish(filas), "\\s+")
+
+produccion <- map_dfr(campos, function(x) {
+  tibble(
+    cosecha = x[1],
+    produccion_fanegas = parse_number(x[2], locale = locale(grouping_mark = ",")),
+    rendimiento_kg_fanega = parse_number(x[3]),
+    cafe_oro_sacos_46kg = parse_number(x[4], locale = locale(grouping_mark = ",")),
+    exportacion_sacos_46kg = parse_number(x[5], locale = locale(grouping_mark = ",")),
+    porcentaje_exportacion = parse_number(x[6]) / 100,
+    consumo_nacional_sacos_46kg = parse_number(x[7], locale = locale(grouping_mark = ",")),
+    porcentaje_consumo = parse_number(x[8]) / 100
+  )
+})
+
+View(produccion)
+
+
+```
+precipitacion y temperatura:
+
+```{r}
+clima <- datos.NASA |>
+  pivot_longer(
+    cols = all_of(c("APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT")),
+    names_to = "mes",
+    values_to = "valor"
+  ) |>
+  group_by(YEAR, PARAMETER) |>
+  summarise(promedio = mean(valor, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = PARAMETER, values_from = promedio) |>
+  rename(
+    anio = YEAR,
+    lluvia_promedio_mm_dia = PRECTOTCORR,
+    temperatura_promedio_c = T2M
+  )
+```
+
+relacionando con la cosecha:
+```{r}
+datos_modelo <- produccion |>
+  mutate(anio = as.integer(str_sub(cosecha, 1, 4))) |>
+  left_join(clima, by = "anio") |>
+  arrange(anio) |>
+  mutate(produccion_anterior = lag(produccion_fanegas))
+
+View(datos_modelo)
+```
+
+
+```{r}
+glimpse(datos_modelo)
+
+colSums(is.na(datos_modelo))
+
+range(datos_modelo$anio, na.rm = TRUE)
+```
+
+
+## codigo de los modelos
+
+### regresion lineal
+### regresion ridge
+### arbol de regresion
