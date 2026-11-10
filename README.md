@@ -98,17 +98,3 @@ El indicador de referencia utilizado por la NOAA para el seguimiento del fenóme
 
 ## Referencias
 
-[^1]: Instituto del Café de Costa Rica (ICAFE). [Informe sobre la Actividad Cafetalera de Costa Rica](https://www.icafe.cr/wp-content/uploads/informacion_mercado/informes_actividad/actual/Informe%20Actividad%20Cafetalera.pdf) (ediciones 2022-2025). icafe.cr
-
-[^2]: Organización Internacional del Café (OIC), USDA, StoneX Group, Volcafe Holding Ltd. — citados como fuentes de estimación de cosecha mundial en el Informe sobre la Actividad Cafetalera del ICAFE.
-
-[^3]: Estándar internacional de medida cafetalera: saco de 60 kg, utilizado por la Organización Internacional del Café (OIC) y el USDA.
-
-[^4]: NASA Langley Research Center — POWER Project. [Monthly and Annual API Documentation](https://power.larc.nasa.gov/docs/services/api/temporal/monthly/). power.larc.nasa.gov
-
-[^5]: NOAA, Climate Prediction Center. [Relative Oceanic Niño Index (RONI)](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/) — índice oficial de monitoreo ENSO desde febrero de 2026 (reemplazó al ONI clásico). cpc.ncep.noaa.gov
-
-[^6]: Instituto Meteorológico Nacional (IMN). [Avisos Meteorológicos y Atlas Climatológico](https://www.imn.ac.cr). imn.ac.cr
-
-# [^7]: Ramírez, Caficultura desde Costa Rica. [Actualización del área cafetalera nacional](https://ramirezcaficulturadesdecostarica.com/ct-191), con base en datos del ICAFE.
-[^8] https://www.imn.ac.cr/web/imn/pronostico-climatico
