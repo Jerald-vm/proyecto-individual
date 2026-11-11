@@ -277,41 +277,227 @@ View(tabla_modelo)
 View(fila_proyeccion)
 
 ```
-# codigo modelo
 
-## regresion lineal (RL)
 
 ```{r}
-#calculo.lineal <- function()
-```
+#| label: modelos
+#| include: false
 
-## regresion ridge (RR)
+library(glmnet)
+library(rpart)
 
-```{r}
-#calculo.ridge <- function()
-```
+# parametros
 
-## arbol de regresion (AR)
+inicio_backtesting <- 15
+seed <- 2026
 
-```{r}
-#calculo.arbol <- function()
+var.preditores <- c("lluvia_promedio_mm_dia", "temperatura_promedio_c", "roni",
+  "produccion_anterior", "precio_anterior")
+
+formula_modelo <- reformulate(var.preditores, response = "produccion_sacos_60kg")
+
+#funciones
+# Se ajustan los modelos con los datos previamente establecidos
+
+ajuste <- function(entrenamiento) {
+  set.seed(seed)
+  x <- as.matrix(entrenamiento[var.preditores])
+  y <- entrenamiento$produccion_sacos_60kg
+  
+  list(
+    lineal = lm(formula_modelo, data = entrenamiento),
+    ridge = cv.glmnet(x, y, alpha = 0, nfolds = 5),
+    arbol = rpart(formula_modelo, data = entrenamiento, control = rpart.control(minsplit = 5, minbucket = 2, cp = 0.01))
+  )
+}
+
+#prediccion de cada modelo agregando la referencia ingenua
+
+prediccion_modelos <- function(modelos, nuevos) {
+  tibble(
+    cosecha = rep(nuevos$cosecha, 4),
+    modelo = rep(c("Lineal", "Ridge", "Árbol", "Ingenuo"), each = nrow(nuevos)),
+    prediccion = c(
+      predict(modelos$lineal, newdata = nuevos),
+      as.numeric(predict(modelos$ridge, newx = as.matrix(nuevos[var.preditores]), s = "lambda.min")),
+      predict(modelos$arbol, newdata = nuevos),
+      nuevos$produccion_anterior   # ingenuo: la cosecha anterior
+    )
+  )
+}
+
+
+#Se calcula el RSME, MAE y R^2 como muestra por fuera del modelo
+
+metricas <- function(predicciones) {
+  predicciones %>% 
+    group_by(modelo) %>% 
+    summarise(
+      rmse = sqrt(mean((observado-prediccion)^2)),
+      mae = mean(abs(observado - prediccion)),
+      r_cuadrado= 1 - sum((observado - prediccion)^2) / sum((observado - mean(observado))^2),
+      .groups = "drop"
+    ) %>% 
+    arrange(rmse)
+}
+
+
+# backtesting con la ventana creciente
+
+backtest <- map_dfr((inicio_backtesting + 1):nrow(tabla_modelo), function(i) {
+  entrenamiento <- tabla_modelo[seq_len(i - 1), ]
+  nuevo <- tabla_modelo[i, ]
+ 
+  ajuste(entrenamiento) %>% 
+    prediccion_modelos(nuevo) %>% 
+    mutate(observado = nuevo$produccion_sacos_60kg, anio = nuevo$anio)
+})
+ 
+metricas <- metricas(backtest)
+
+
+#proyeccion futura 2026-2027
+
+modelos_finales <- ajuste(tabla_modelo)
+ 
+# El modelo elegido es el de menor RMSE entre los tres modelos (sin el ingenuo)
+modelo_elegido <- metricas |>
+  filter(modelo != "Ingenuo") |>
+  slice_min(rmse, n = 1) |>
+  pull(modelo)
+ 
+proyeccion <- prediccion_modelos(modelos_finales, fila_proyeccion) |>
+  left_join(select(metricas, modelo, rmse), by = "modelo") |>
+  mutate(
+    # Rango aproximado: la predicción más o menos 1.96 veces el RMSE del backtesting
+    inferior = prediccion - 1.96 * rmse,
+    superior = prediccion + 1.96 * rmse
+  )
+
 ```
 
 
 # Resultados
 
 ```{r}
-# tabla_totales <- datos_modelo %>% 
-#   filter(as.numeric(str_sub(cosecha, -4)) %% 2 == 0) %>% 
-#   select(
-#   cosecha = cosecha,
-#   "produccion real" = produccion_fanegas,
-#  # "Produccion RL" = calculo.lineal,
-# #  "Produccion RR" = calculo.ridge,
-#  # "Produccion AR" = calculo.arbol
-# )
-# kable(tabla_totales)
+#| label: valores
+# Cifras que se citan en el texto
+fmt <- function(x) format(round(x), big.mark = " ", scientific = FALSE)
+rmse <- set_names(metricas$rmse, metricas$modelo)
+r2 <- set_names(metricas$r_cuadrado, metricas$modelo)
+proy <- set_names(proyeccion$prediccion, proyeccion$modelo)
+serie <- datos_modelo |> filter(!is.na(produccion_sacos_60kg)) |> arrange(anio)
+ultima_cosecha <- tail(serie$produccion_sacos_60kg, 1)
+correlaciones <- cor(tabla_modelo[var.preditores])
 ```
+
+## Análisis exploratorio
+
+La producción nacional pasó de `r fmt(serie$produccion_sacos_60kg[1])` sacos de 60 kg en la cosecha 1994-1995 a `r fmt(ultima_cosecha)` en 2025-2026 (@fig-produccion). Los predictores se correlacionan mucho entre sí, en especial la producción anterior con el precio rezagado (r = `r round(correlaciones["produccion_anterior", "precio_anterior"], 2)`) y con la lluvia (r = `r round(correlaciones["produccion_anterior", "lluvia_promedio_mm_dia"], 2)`), lo que sugiere que comparten una tendencia en el tiempo (@fig-predictores).
+
+```{r}
+#| label: fig-produccion
+#| fig-cap: "Producción nacional de café por cosecha. Fuente: elaboración propia con datos del ICAFE (2025) y La República (2026)."
+#| fig-width: 6
+#| fig-height: 2.3
+#| fig-pos: "H"
+# Serie de producción en millones de sacos de 60 kg
+ggplot(serie, aes(anio, produccion_sacos_60kg / 1e6)) +
+  geom_line(color = "#0072B2") +
+  geom_point(color = "#0072B2", size = 1.5) +
+  labs(x = "Año de inicio de la cosecha", y = "Millones de sacos de 60 kg") +
+  theme_minimal(base_size = 10)
+```
+
+```{r}
+#| label: fig-predictores
+#| fig-cap: "Evolución de los predictores. Fuente: elaboración propia con datos de NASA POWER, NOAA y el ICAFE (2025)."
+#| fig-width: 6
+#| fig-height: 2.3
+#| fig-pos: "H"
+# Cuatro predictores por año, cada uno con su propia escala
+datos_modelo |>
+  filter(anio < 2026) |>
+  select(anio,
+         `Lluvia (mm/día)` = lluvia_promedio_mm_dia,
+         `Temperatura (°C)` = temperatura_promedio_c,
+         `RONI` = roni,
+         `Precio (USD/fanega)` = precio_usd_fanega) |>
+  pivot_longer(-anio, names_to = "variable", values_to = "valor") |>
+  mutate(variable = factor(variable, levels = unique(variable))) |>
+  ggplot(aes(anio, valor)) +
+  geom_line(color = "#009E73") +
+  facet_wrap(~variable, nrow = 1, scales = "free_y") +
+  labs(x = "Año", y = NULL) +
+  theme_minimal(base_size = 8)
+```
+
+## Resultados de los modelos
+
+@tbl-metricas resume el backtesting. El método ingenuo obtuvo el menor error (RMSE de `r fmt(rmse["Ingenuo"])` sacos), seguido del árbol (`r fmt(rmse["Árbol"])`), Ridge (`r fmt(rmse["Ridge"])`) y el modelo lineal (`r fmt(rmse["Lineal"])`), y los cuatro tuvieron un $R^2$ fuera de muestra negativo. El modelo lineal explicó `r round(summary(modelos_finales$lineal)$r.squared, 2)` de la variabilidad dentro de la muestra, pero su $R^2$ fuera de ella fue de `r round(r2["Lineal"], 2)`, señal de sobreajuste. [Completar: sesgo de los modelos en @fig-backtest.]
+
+```{r}
+#| label: tbl-metricas
+#| tbl-cap: "Error de predicción en el backtesting (sacos de 60 kg). Fuente: elaboración propia."
+#| tbl-pos: "H"
+# Métricas por modelo, ordenadas por RMSE
+metricas |>
+  knitr::kable(
+    col.names = c("Modelo", "RMSE", "MAE", "$R^2$ fuera de muestra"),
+    digits = c(0, 0, 0, 2),
+    format.args = list(big.mark = " "),
+    booktabs = TRUE,
+    escape = FALSE
+  )
+```
+
+```{r}
+#| label: fig-backtest
+#| fig-cap: "Producción observada y predicha en el backtesting (sacos de 60 kg). Fuente: elaboración propia con datos del ICAFE (2025)."
+#| fig-width: 6
+#| fig-height: 2.5
+#| fig-pos: "H"
+# Observado y predicho por modelo para cada cosecha evaluada
+bind_rows(
+  select(backtest, anio, modelo, valor = prediccion),
+  distinct(backtest, anio, observado) |> transmute(anio, modelo = "Observado", valor = observado)
+) |>
+  mutate(modelo = factor(modelo, levels = c("Observado", "Lineal", "Ridge", "Árbol", "Ingenuo"))) |>
+  ggplot(aes(anio, valor / 1e6, color = modelo, linetype = modelo)) +
+  geom_line(linewidth = 0.7) +
+  scale_color_manual(values = c("Observado" = "black", "Lineal" = "#0072B2", "Ridge" = "#009E73",
+                                "Árbol" = "#D55E00", "Ingenuo" = "#999999")) +
+  scale_linetype_manual(values = c("Observado" = "solid", "Lineal" = "solid", "Ridge" = "solid",
+                                   "Árbol" = "solid", "Ingenuo" = "dashed")) +
+  labs(x = "Año de inicio de la cosecha", y = "Millones de sacos", color = NULL, linetype = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "bottom")
+```
+
+Para 2026-2027 los modelos proyectan entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg (@fig-proyeccion). El árbol, el de menor error entre los tres modelos, proyecta `r fmt(proy["Árbol"])` sacos, un `r round(100 * (proy["Árbol"] / ultima_cosecha - 1), 1)` % más que la cosecha 2025-2026. Los rangos son amplios porque el error del backtesting es grande respecto a las diferencias entre modelos.
+
+```{r}
+#| label: fig-proyeccion
+#| fig-cap: "Proyección de la cosecha 2026-2027 por modelo, con rango aproximado de ±1.96 RMSE. Fuente: elaboración propia."
+#| fig-width: 6
+#| fig-height: 2.3
+#| fig-pos: "H"
+# Proyección con rango; la línea punteada es la cosecha 2025-2026
+proyeccion |>
+  mutate(modelo = fct_reorder(modelo, prediccion)) |>
+  ggplot(aes(prediccion / 1e6, modelo)) +
+  geom_vline(xintercept = ultima_cosecha / 1e6, linetype = "dashed", color = "grey40") +
+  geom_pointrange(aes(xmin = inferior / 1e6, xmax = superior / 1e6), color = "#0072B2") +
+  labs(x = "Millones de sacos de 60 kg", y = NULL) +
+  theme_minimal(base_size = 10)
+```
+
+## Conclusiones
+
+1. [Con estos datos ningún modelo mejora de forma clara al método ingenuo; la cosecha anterior concentra casi toda la información predictiva.]
+2. [La proyección para 2026-2027 está entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg, con una incertidumbre amplia.]
+3. [Con 31 cosechas y predictores que comparten tendencia, no es posible separar el efecto del clima, el RONI y el precio.]
+
 
 \newpage
 
