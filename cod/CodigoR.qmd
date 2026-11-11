@@ -108,32 +108,45 @@ library(knitr)
 library(pdftools)
 library(readxl)
 
- pdf <- "../data/Informe Actividad Cafetalera.pdf"
 
-# extraccion de datos usando pdftools:
-datos.icafe <- pdf_text(pdf)
+
+# variables a usar
+
+saco_cafe <- 46/60
+proyeccion_cosecha <- 2026
+pagina_produccion <- 88
+pagina_precio <- 89
+
+
+
+# lectura de los datos
+datos.icafe <- pdf_text("../data/Informe Actividad Cafetalera.pdf")
+
+datos.CPC <- pdf_text("../data/Climate Prediction Center - Relative Oceanic Niño Index (RONI).pdf")
+
 #agregando los datos:
 datos.NASA <- read_excel("../config/datosNasa.xlsx",
-             sheet = 1,
+  sheet = 1,
   skip = 11,
   na = "-999"
 ) |>
   mutate(YEAR = as.integer(YEAR))
-datos.CPC <- pdf_text("../data/Climate Prediction Center - Relative Oceanic Niño Index (RONI).pdf")
-datos.comunicaciones <- pdf_text("../data/Ramirez Caficultura desde Costa Rica.pdf")
-#extraccion de datos de fanegas:
-# Revisa el texto extraído de la página 88
-cat(datos.icafe[[88]])
 
-lineas <- str_split(datos.icafe[[88]], "\n")[[1]]
+datos.comunicaciones <- pdf_text("../data/Ramirez Caficultura desde Costa Rica.pdf")
+
+# extrayendo datos de produccion icafe
+
+lineas <- str_split(datos.icafe[[pagina_produccion]], "\n")[[1]]
 
 # Conserva las líneas que comienzan con un año de cosecha
 filas <- str_subset(lineas, "^\\s*\\d{4}-\\d{4}\\s")
 
-# La última cosecha tiene una nota al pie ("b"); quítala antes de separar columnas
+# Se quita la nota al pie
 filas <- str_replace(filas, "(\\d{4}-\\d{4})\\s+[a-z*]", "\\1")
 
 campos <- str_split(str_squish(filas), "\\s+")
+
+#funcion de produccion
 
 produccion <- map_dfr(campos, function(x) {
   tibble(
@@ -146,38 +159,122 @@ produccion <- map_dfr(campos, function(x) {
     consumo_nacional_sacos_46kg = parse_number(x[7], locale = locale(grouping_mark = ",")),
     porcentaje_consumo = parse_number(x[8]) / 100
   )
-})
+}) %>% mutate(
+  produccion_sacos_60kg = cafe_oro_sacos_46kg * saco_cafe
+)
 
-#precipitacion y temperatura:
-clima <- datos.NASA |>
+#funcion exportacion de precio
+lineas.precio <- str_split(datos.icafe[[pagina_precio]], "\n")[[1]]
+ 
+filas.precio <- lineas.precio |>
+  str_subset("^\\s*\\d{4}-\\d{4}\\s") |>
+  str_replace("(\\d{4}-\\d{4})\\s+[a-z*]", "\\1")
+ 
+campos.precio <- str_split(str_squish(filas.precio), "\\s+")
+ 
+precio <- map_dfr(campos.precio, function(x) {
+  tibble(
+    cosecha = x[1],
+    liquidacion_crc_fanega = parse_number(x[4], locale = locale(grouping_mark = ",")),
+    tipo_cambio_crc_usd = parse_number(x[5], locale = locale(grouping_mark = ",")
+  ))
+}) %>% 
+  mutate(
+  precio_usd_fanega = liquidacion_crc_fanega / tipo_cambio_crc_usd) %>% 
+  select(cosecha, precio_usd_fanega
+  )
+
+# cosecha del 2025 al 2026
+
+# Datos que el informe aún no trae; completar con la fuente consultada
+cosecha.reciente <- tibble(
+  cosecha = "2025-2026",
+  cafe_oro_sacos_46kg = 1170000 * 60 / 46,
+  liquidacion_crc_fanega = 118627,
+  tipo_cambio_crc_usd = 470
+) %>% 
+  mutate(
+    produccion_sacos_60kg = cafe_oro_sacos_46kg * saco_cafe,
+    precio_usd_fanega = liquidacion_crc_fanega / tipo_cambio_crc_usd
+    )
+
+
+
+#precipitacion y temperatura extraidos de NASA
+clima <- datos.NASA %>% 
   pivot_longer(
     cols = all_of(c("APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT")),
     names_to = "mes",
     values_to = "valor"
-  ) |>
+  ) %>%  mutate(valor = na_if(as.numeric(valor), -999)) %>% 
   group_by(YEAR, PARAMETER) |>
-  summarise(promedio = mean(valor, na.rm = TRUE), .groups = "drop") |>
-  pivot_wider(names_from = PARAMETER, values_from = promedio) |>
+  summarise(promedio = mean(valor, na.rm = TRUE), .groups = "drop") %>% 
+  pivot_wider(names_from = PARAMETER, values_from = promedio) %>% 
   rename(
     anio = YEAR,
     lluvia_promedio_mm_dia = PRECTOTCORR,
     temperatura_promedio_c = T2M
   )
-#relacionando con la cosecha:
-datos_modelo <- produccion |>
-  mutate(anio = as.integer(str_sub(cosecha, 1, 4))) |>
-  left_join(clima, by = "anio") |>
-  arrange(anio) |>
+
+# Datos NOAA: el RONI de abril a octubre
+
+# Cada fila trae el año y 12 trimestres móviles (DJF ... NDJ).
+# AMJ, MJJ, JJA, JAS y ASO (posiciones 5 a 9) cubren de abril a octubre.
+lineas.roni <- datos.CPC %>% 
+  str_split("\n") %>% 
+  unlist() %>% 
+  str_squish() %>% 
+  str_subset("^(19|20)\\d{2}(\\s+-?\\d+\\.\\d+){1,12}$")
+ 
+roni <- map_dfr(str_split(lineas.roni, "\\s+"), function(x) {
+  tibble(
+    anio = as.integer(x[1]),
+    roni = mean(as.numeric(x[-1])[5:9], na.rm = TRUE)
+  )
+})
+ 
+#resago, union y salidas de la cosecha de cafe:
+variables <- c(
+  "produccion_sacos_60kg", "lluvia_promedio_mm_dia", "temperatura_promedio_c",
+  "roni", "produccion_anterior", "precio_anterior"
+)
+
+datos_modelo <- produccion %>% 
+  mutate(anio = as.integer(str_sub(cosecha, 1, 4))) %>% 
+  left_join(clima, by = "anio") %>% 
+  arrange(anio) %>% 
   mutate(produccion_anterior = lag(produccion_fanegas))
 
-View(datos_modelo)
+datos_modelo <- produccion %>% 
+  select(cosecha, produccion_sacos_60kg) %>% 
+  left_join(precio, by = "cosecha") %>% 
+  bind_rows(select(cosecha.reciente, cosecha, produccion_sacos_60kg, precio_usd_fanega)) %>% 
+   bind_rows(tibble(cosecha = str_c(proyeccion_cosecha, "-", proyeccion_cosecha + 1))) %>% 
+  mutate(anio = as.integer(str_sub(cosecha, 1, 4))) %>% 
+  left_join(clima, by = "anio") %>% 
+  left_join(roni, by = "anio") %>% 
+  arrange(anio) %>% 
+  mutate(
+    produccion_anterior = lag(produccion_sacos_60kg),
+    precio_anterior = lag(precio_usd_fanega)
+  )
 
+tabla_modelo <- datos_modelo %>% 
+  filter(anio < proyeccion_cosecha) %>% 
+  select(cosecha, anio, all_of(variables)) %>% 
+  drop_na()
+ 
+fila_proyeccion <- datos_modelo %>% 
+  filter(anio == proyeccion_cosecha) %>% 
+  select(cosecha, anio, all_of(variables))
 
-glimpse(datos_modelo)
+stopifnot(
+  "Faltan datos de 2025-2026 o del clima/RONI de 2026" =
+    !anyNA(select(fila_proyeccion, -produccion_sacos_60kg))
+)
 
-colSums(is.na(datos_modelo))
-
-range(datos_modelo$anio, na.rm = TRUE)
+View(tabla_modelo)
+View(fila_proyeccion)
 
 ```
 # codigo modelo
@@ -204,16 +301,16 @@ range(datos_modelo$anio, na.rm = TRUE)
 # Resultados
 
 ```{r}
-tabla_totales <- datos_modelo %>% 
-  filter(as.numeric(str_sub(cosecha, -4)) %% 2 == 0) %>% 
-  select(
-  cosecha = cosecha,
-  "produccion real" = produccion_fanegas,
- # "Produccion RL" = calculo.lineal,
-#  "Produccion RR" = calculo.ridge,
- # "Produccion AR" = calculo.arbol
-)
-kable(tabla_totales)
+# tabla_totales <- datos_modelo %>% 
+#   filter(as.numeric(str_sub(cosecha, -4)) %% 2 == 0) %>% 
+#   select(
+#   cosecha = cosecha,
+#   "produccion real" = produccion_fanegas,
+#  # "Produccion RL" = calculo.lineal,
+# #  "Produccion RR" = calculo.ridge,
+#  # "Produccion AR" = calculo.arbol
+# )
+# kable(tabla_totales)
 ```
 
 \newpage
