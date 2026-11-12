@@ -72,7 +72,7 @@ Es una técnica de regresión estadística que se utiliza para corregir el sobre
 $$
 \text{RSS}_{\text{Ridge}}=\sum _{i=1}^{n}(y_{i}-\hat{y}_{i})^{2}+\lambda \sum _{j=1}^{p}\beta _{j}^{2}
 $$
-Donde λ controla el nivel de penalizacion, se toma por validacion cruzada, $y_{i}$ es la cosecha real observada, $\hat{y}_{i}$ es la cosecha predicha por el modelo. y $p$ la cantidad de variables predictoras.
+Donde $λ$ controla el nivel de penalizacion, se toma por validacion cruzada, $y_{i}$ es la cosecha real observada, $\hat{y}_{i}$ es la cosecha predicha por el modelo. y $p$ la cantidad de variables predictoras.
 
 ### arbol de regresion
 
@@ -506,11 +506,15 @@ proyeccion |>
 
 # Bibliografia
 
+Brenes, L. (12 de agosto, 2025). Cosecha 2025/26: Menos café, a mejor precio, pero menos rentabilidad por tipo de cambio y aranceles. La República.
+[https://www.larepublica.net/noticia/cosecha-2025-26-menos-cafe-a-mejor-precio-pero-menos-rentabilidad-por-tipo-de-cambio-y-aranceles](https://www.larepublica.net/noticia/cosecha-2025-26-menos-cafe-a-mejor-precio-pero-menos-rentabilidad-por-tipo-de-cambio-y-aranceles)
+
+Hyndman, R. J., y Athanasopoulos, G. (2021). Forecasting: Principles and practice (3.ª ed.). OTexts. [https://otexts.com/fpp3/](https://otexts.com/fpp3/)
+IBM. (16 de agosto, 2026). ¿Qué es regression?. [https://www.ibm.com/mx-es/think/topics/ridge-regression](https://www.ibm.com/mx-es/think/topics/ridge-regression)
+
 Instituto del Café de Costa Rica. (2025). Informe de la actividad cafetalera de Costa Rica 2025. [https://www.icafe.cr/wp-content/uploads/informacion_mercado/informes_actividad/actual/Informe%20Actividad%20Cafetalera.pdf](https://www.icafe.cr/wp-content/uploads/informacion_mercado/informes_actividad/actual/Informe%20Actividad%20Cafetalera.pdf)
 
-Instituto Meteorológico Nacional. (s. f.). Avisos meteorológicos y atlas climatológico. Recuperado el 10 de noviembre de 2026, de [https://www.imn.ac.cr](https://www.imn.ac.cr)
-
-Instituto Meteorológico Nacional. (s. f.). Pronóstico climático. Recuperado el 10 de noviembre de 2026, de [https://www.imn.ac.cr/web/imn/pronostico-climatico](https://www.imn.ac.cr/web/imn/pronostico-climatico)
+James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An Introduction to Statistical Learning: with Applications in R (2.ª ed.). Springer 
 
 National Aeronautics and Space Administration, Langley Research Center. (s. f.). Monthly and annual API documentation. NASA POWER. Recuperado el 10 de noviembre de 2026, de [https://power.larc.nasa.gov/docs/services/api/temporal/monthly/](https://power.larc.nasa.gov/docs/services/api/temporal/monthly/)
 
@@ -522,13 +526,11 @@ Ramírez. (s. f.). Actualización del área cafetalera nacional. Caficultura des
 
 
 
-James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An Introduction to Statistical Learning: with Applications in R (2.ª ed.). Springer 
-
-IBM. (16 de agosto, 2026). ¿Qué es regression?. [https://www.ibm.com/mx-es/think/topics/ridge-regression](https://www.ibm.com/mx-es/think/topics/ridge-regression)
-Hyndman, R. J., y Athanasopoulos, G. (2021). Forecasting: Principles and practice (3.ª ed.). OTexts. [https://otexts.com/fpp3/](https://otexts.com/fpp3/)
 
 
-Brenes, L. (12 de agosto, 2025). Cosecha 2025/26: Menos café, a mejor precio, pero menos rentabilidad por tipo de cambio y aranceles. La República. [https://www.larepublica.net/noticia/cosecha-2025-26-menos-cafe-a-mejor-precio-pero-menos-rentabilidad-por-tipo-de-cambio-y-aranceles](https://www.larepublica.net/noticia/cosecha-2025-26-menos-cafe-a-mejor-precio-pero-menos-rentabilidad-por-tipo-de-cambio-y-aranceles)
+
+
+
 
 \newpage
 
