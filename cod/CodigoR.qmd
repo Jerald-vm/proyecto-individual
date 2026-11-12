@@ -40,7 +40,7 @@ Jerald Valverde Mora\\
 
 # Introduccion
 
-El cafe es uno de los productos agricolas mas importantes en la historia de Costa Rica, no solo por su impacto como producto, sino como componente primorial de la historia y uno de los motores economicos del pais a traves de los anos. Al ser un producto agricola, la cantidad que se produce de este esta sujeto a distintas variables que pueden cambiar a lo largo del tiempo; algunos de ellos son los factores climaticos, de mercado y la bienalidad de la planta. La produccion total ha seguido una tendencia a que las cosechas que se producen en cada temporada sean fluctuantes y tiendan a tener valores cada vez mas bajos, estando en 3.3 millones en 1994 y bajando a 1.8 millones de fanegas en 2025 (ICAFE, pag. 88, 2025).
+El cafe es uno de los productos agricolas mas importantes en la historia de Costa Rica, no solo por su impacto como producto, sino como componente primorial de la historia y uno de los motores economicos del pais a traves de los anos. Al ser un producto agricola, la cantidad que se produce de este esta sujeto a distintas variables que pueden cambiar a lo largo del tiempo; algunos de ellos son los factores climaticos, de mercado y la bienalidad de la planta. La produccion total ha seguido una tendencia a que las cosechas que se producen en cada temporada sean fluctuantes y tiendan a tener valores cada vez mas bajos, estando en 2.5 millones en 1994 y bajando a 1.38 millones de sacos de 60kg en 2025 (ICAFE, pag. 88, 2025).
   
 La intencion de este proyecto es anticipar el volumen de cada cosecha para productores, exportadores y beneficiadores; asi como, interpretar el ejercicio habitual que realiza la OIC (Organizacion Internacional del Cafe), que estima la produccion de cafe. La propuesta es estimar la cosecha nacional 2026-2027 con tres modelos estadísticos en R, a partir de la producción y el precio del ICAFE, el clima de NASA POWER y un indicador del fenómeno ENOS de la NOAA.
 
@@ -58,7 +58,7 @@ Los datos climáticos (precipitación (mm/dia) y temperatura medias (°C) de abr
 
 ## Construcción de variables
 
-Cada cosecha se asocia a su ano de inicio: la cosecha 2023-2024 se asocia al año 2023, de esta manera; el clima y el RONI se usan del periodo de abril a octubre del ano respectivo a la recoleccion. Como variable respuesta se da la produccion nacional en sacos de 60kg, que se obtiene al multiplicar el cafe oro dado en sacos de 46kg por 46/60. Se descartan las exportaciones, el consumo nacional y el rendimiento como predictores ya que se calculan a partir de la misma cosecha que se pretende estimar. los datos climaticos (precipitacion y temperatura) se promedian sobre los meses mencionados de cada ano, asi como el RONI. Para tomar la bienalidad se incluye la produccion de la cosecha anterior como variable rezagada, igual manera el precio, ya que este se conoce una vez terminada la cosecha. Al tomar este rezago se pierde la primera cosecha, por lo que se contemplan $n = 30$ observaciones completas. los datos predictores se estandarizaron antes de ajustar la regresion de Ridge ya que es sensible a la escala. La cosecha 2026-2027 se proyecta con el clima y el RONI de 2026 y la producción y el precio de la cosecha 2025-2026.
+Cada cosecha se asocia a su ano de inicio: la cosecha 2023-2024 se asocia al año 2023, de esta manera; el clima y el RONI se usan del periodo de abril a octubre del ano respectivo a la recoleccion. Como variable respuesta se da la produccion nacional en sacos de 60kg, que se obtiene al multiplicar el cafe oro dado en sacos de 46kg por 46/60. Se descartan las exportaciones, el consumo nacional y el rendimiento como predictores ya que se calculan a partir de la misma cosecha que se pretende estimar. los datos climaticos (precipitacion y temperatura) se promedian sobre los meses mencionados de cada ano, asi como el RONI. Para tomar la bienalidad se incluye la produccion de la cosecha anterior como variable rezagada, igual manera el precio, ya que este se conoce una vez terminada la cosecha. Al tomar este rezago se pierde la primera cosecha, por lo que se contemplan $n = 31$ observaciones completas. los datos predictores se estandarizaron antes de ajustar la regresion de Ridge ya que es sensible a la escala. La cosecha 2026-2027 se proyecta con el clima y el RONI de 2026 y la producción y el precio de la cosecha 2025-2026.
 
 ## Modelos
 
@@ -96,7 +96,7 @@ donde $\bar{y}$ es la media de lo observado. El RMSE penaliza los errores grande
 - La precipitación, la temperatura y el RONI están correlacionados, porque el ENOS influye en el clima, lo que puede volver inestables los coeficientes de la regresión lineal.
 - Se cuenta con unas 30 observaciones frente a cinco variables predictoras, lo que incrementa el riesgo de sobreajuste, especialmente en el árbol de regresión.
 
-# codigo extraccion de datos
+
 
 ```{r}
 #| label: datos
@@ -273,8 +273,6 @@ stopifnot(
     !anyNA(select(fila_proyeccion, -produccion_sacos_60kg))
 )
 
-View(tabla_modelo)
-View(fila_proyeccion)
 
 ```
 
@@ -393,13 +391,12 @@ correlaciones <- cor(tabla_modelo[var.preditores])
 
 ## Análisis exploratorio
 
-La producción nacional pasó de `r fmt(serie$produccion_sacos_60kg[1])` sacos de 60 kg en la cosecha 1994-1995 a `r fmt(ultima_cosecha)` en 2025-2026 (@fig-produccion). Los predictores se correlacionan mucho entre sí, en especial la producción anterior con el precio rezagado (r = `r round(correlaciones["produccion_anterior", "precio_anterior"], 2)`) y con la lluvia (r = `r round(correlaciones["produccion_anterior", "lluvia_promedio_mm_dia"], 2)`), lo que sugiere que comparten una tendencia en el tiempo (@fig-predictores).
 
 ```{r}
 #| label: fig-produccion
 #| fig-cap: "Producción nacional de café por cosecha. Fuente: elaboración propia con datos del ICAFE (2025) y La República (2026)."
 #| fig-width: 6
-#| fig-height: 2.3
+#| fig-height: 2.6
 #| fig-pos: "H"
 # Serie de producción en millones de sacos de 60 kg
 ggplot(serie, aes(anio, produccion_sacos_60kg / 1e6)) +
@@ -408,6 +405,8 @@ ggplot(serie, aes(anio, produccion_sacos_60kg / 1e6)) +
   labs(x = "Año de inicio de la cosecha", y = "Millones de sacos de 60 kg") +
   theme_minimal(base_size = 10)
 ```
+En la (@fig-produccion) se observa como la produccion nacional pasa de `r fmt(serie$produccion_sacos_60kg[1])` sacos de 60 kg en la cosecha 1994-1995 a `r fmt(ultima_cosecha)` en 2025-2026. Por otra parte, en la (@fig-predictores) se logra evidenciar como hay una relacion contraria con la produccion de las variables predictores de la lluvia y el precio, es decir, si la produccion de cafe baja se ve reflejado en que hubo tendencia al aumento de las lluvias y por ende, un aumento en el precio. Esto se evidencia con el precio rezagado (r = `r round(correlaciones["produccion_anterior", "precio_anterior"], 2)`) y con la lluvia (r = `r round(correlaciones["produccion_anterior", "lluvia_promedio_mm_dia"], 2)`)
+
 
 ```{r}
 #| label: fig-predictores
@@ -434,7 +433,8 @@ datos_modelo |>
 
 ## Resultados de los modelos
 
-@tbl-metricas resume el backtesting. El método ingenuo obtuvo el menor error (RMSE de `r fmt(rmse["Ingenuo"])` sacos), seguido del árbol (`r fmt(rmse["Árbol"])`), Ridge (`r fmt(rmse["Ridge"])`) y el modelo lineal (`r fmt(rmse["Lineal"])`), y los cuatro tuvieron un $R^2$ fuera de muestra negativo. El modelo lineal explicó `r round(summary(modelos_finales$lineal)$r.squared, 2)` de la variabilidad dentro de la muestra, pero su $R^2$ fuera de ella fue de `r round(r2["Lineal"], 2)`, señal de sobreajuste. [Completar: sesgo de los modelos en @fig-backtest.]
+@tbl-metricas se observa un resumen del backtesting utilizado para comprobar el rendimiento de los modelos. El método ingenuo obtuvo el menor error (RMSE de `r fmt(rmse["Ingenuo"])` sacos), seguido del árbol (`r fmt(rmse["Árbol"])`), Ridge (`r fmt(rmse["Ridge"])`) y el modelo lineal (`r fmt(rmse["Lineal"])`), y los cuatro tuvieron un $R^2$ fuera de muestra negativo. el metodo ingenuo tiene un desempeño que se explica porque la produccion de una cosecha depende de lo que haya pasado con la cosecha anterior, ambas tienen una correlación de `r round(cor(tabla_modelo$produccion_anterior, tabla_modelo$produccion_sacos_60kg), 2)`. En el modelo lineal de todas las variables predictoras la produccion anterior es a unica significativa. Sabiendo que paso con la cosecha anterior, los demas modelos las reducen obteniendo asi un error con poca mejora de la prediccion. Como el metodo ingenuo se ajusta de inmediato, no tiene el costo de saber que paso con las cosechas antiguas, mientras que los entrenados tienden a sobrepredecir cuando la produccion baja @fig-backtest.
+
 
 ```{r}
 #| label: tbl-metricas
@@ -474,7 +474,9 @@ bind_rows(
   theme(legend.position = "bottom")
 ```
 
-Para 2026-2027 los modelos proyectan entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg (@fig-proyeccion). El árbol, el de menor error entre los tres modelos, proyecta `r fmt(proy["Árbol"])` sacos, un `r round(100 * (proy["Árbol"] / ultima_cosecha - 1), 1)` % más que la cosecha 2025-2026. Los rangos son amplios porque el error del backtesting es grande respecto a las diferencias entre modelos.
+Para la cosecha en turno (2026-2027) los modelos proyectan entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg (@fig-proyeccion). El árbol, el de menor error entre los tres modelos, proyecta `r fmt(proy["Árbol"])` sacos, un `r round(100 * (proy["Árbol"] / ultima_cosecha - 1), 1)` % más que la cosecha 2025-2026. Se utilizan rangos amplios dado a lo visto en el error del backtesting es grande respecto a las diferencias entre modelos.
+
+
 
 ```{r}
 #| label: fig-proyeccion
@@ -486,17 +488,18 @@ Para 2026-2027 los modelos proyectan entre `r fmt(min(proy))` y `r fmt(max(proy)
 proyeccion |>
   mutate(modelo = fct_reorder(modelo, prediccion)) |>
   ggplot(aes(prediccion / 1e6, modelo)) +
-  geom_vline(xintercept = ultima_cosecha / 1e6, linetype = "dashed", color = "grey40") +
-  geom_pointrange(aes(xmin = inferior / 1e6, xmax = superior / 1e6), color = "#0072B2") +
+  geom_vline(xintercept = ultima_cosecha / 1e6, linetype = "dashed", color = "red") +
+  geom_pointrange(aes(xmin = inferior / 1e6, xmax = superior / 1e6), color = "blue") +
   labs(x = "Millones de sacos de 60 kg", y = NULL) +
   theme_minimal(base_size = 10)
 ```
 
 ## Conclusiones
 
-1. [Con estos datos ningún modelo mejora de forma clara al método ingenuo; la cosecha anterior concentra casi toda la información predictiva.]
-2. [La proyección para 2026-2027 está entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg, con una incertidumbre amplia.]
-3. [Con 31 cosechas y predictores que comparten tendencia, no es posible separar el efecto del clima, el RONI y el precio.]
+- Con los datos utilizados, los modelos no logran una mejora clara al metodo ingenuo, ya que con la cosecha anterior ya contiene casi toda la informacion predictiva. Aunque, los datos de los modelos se pueden usar para respaldar aun mas el metodo ingenuo.
+- la proyeccion de la cosecha 2026-2027 está entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg, con un margen de error amplio.
+- Las 31 cosechas utilizadas no logran separar el efecto del clima, el RONI y el precio respecto a los predictores.
+
 
 
 \newpage
@@ -521,22 +524,90 @@ Ramírez. (s. f.). Actualización del área cafetalera nacional. Caficultura des
 
 James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An Introduction to Statistical Learning: with Applications in R (2.ª ed.). Springer 
 
-IBM. (16 de agostp, 2026). ¿Qué es regression?. [https://www.ibm.com/mx-es/think/topics/ridge-regression](https://www.ibm.com/mx-es/think/topics/ridge-regression)
-Cita el libro en APA 7: Hyndman, R. J., y Athanasopoulos, G. (2021). Forecasting: Principles and practice (3.ª ed.). OTexts. [https://otexts.com/fpp3/]
+IBM. (16 de agosto, 2026). ¿Qué es regression?. [https://www.ibm.com/mx-es/think/topics/ridge-regression](https://www.ibm.com/mx-es/think/topics/ridge-regression)
+Hyndman, R. J., y Athanasopoulos, G. (2021). Forecasting: Principles and practice (3.ª ed.). OTexts. [https://otexts.com/fpp3/](https://otexts.com/fpp3/)
+
+
+Brenes, L. (12 de agosto, 2025). Cosecha 2025/26: Menos café, a mejor precio, pero menos rentabilidad por tipo de cambio y aranceles. La República. [https://www.larepublica.net/noticia/cosecha-2025-26-menos-cafe-a-mejor-precio-pero-menos-rentabilidad-por-tipo-de-cambio-y-aranceles](https://www.larepublica.net/noticia/cosecha-2025-26-menos-cafe-a-mejor-precio-pero-menos-rentabilidad-por-tipo-de-cambio-y-aranceles)
 
 \newpage
 
 # Anexos
 
+```{r}
+# Nombres  para tablas y figuras de los anexos
+etiquetas <- c(
+  lluvia_promedio_mm_dia = "Lluvia (mm/día)",
+  temperatura_promedio_c = "Temperatura (°C)",
+  roni = "RONI",
+  produccion_anterior = "Producción anterior",
+  precio_anterior = "Precio anterior",
+  "(Intercept)" = "Intercepto"
+)
+```
+
+
+```{r}
+#| label: tbl-correlaciones
+#| tbl-cap: "Matriz de correlaciones entre predictores. Fuente: elaboración propia."
+nombres <- c("Lluvia", "Temperatura", "RONI", "Prod. anterior", "Precio anterior")
+dimnames(correlaciones) <- list(nombres, nombres)
+# Correlaciones entre predictores
+knitr::kable(round(correlaciones, 2), booktabs = TRUE)
+```
+
+```{r}
+#| label: tbl-coeficientes
+#| tbl-cap: "Coeficientes del modelo lineal y de Ridge. Fuente: elaboración propia."
+# Coeficientes de los dos modelos paramétricos
+coef_lineal <- summary(modelos_finales$lineal)$coefficients
+coef_ridge <- as.matrix(coef(modelos_finales$ridge, s = "lambda.min"))
+tibble(
+  Variable = unname(etiquetas[rownames(coef_lineal)]),
+  Lineal = coef_lineal[, 1],
+  `Valor p` = coef_lineal[, 4],
+  Ridge = coef_ridge[rownames(coef_lineal), 1]
+) |>
+  knitr::kable(digits = c(0, 2, 3, 2), booktabs = TRUE)
+```
+
+```{r}
+#| label: fig-arbol
+#| fig-cap: "Árbol de regresión ajustado con todas las cosechas. Fuente: elaboración propia. Valores expresados en millones de sacos"
+#| fig-width: 6
+#| fig-height: 3.5
+arbol_fig <- modelos_finales$arbol
+
+# Solo para la figura: producción en millones de sacos
+arbol_fig$frame$yval <- arbol_fig$frame$yval / 1e6
+filas_prod <- rownames(arbol_fig$splits) == "produccion_anterior"
+arbol_fig$splits[filas_prod, "index"] <- arbol_fig$splits[filas_prod, "index"] / 1e6
+
+plot(arbol_fig, uniform = TRUE, margin = 0.1)
+text(arbol_fig, cex = 0.7, digits = 3)
+```
+
+
+
+```{r}
+#| label: tbl-errores
+#| tbl-cap: "Error del backtesting por cosecha y modelo (observado menos predicho, sacos de 60 kg). Fuente: elaboración propia. "
+# Error por año y modelo
+backtest |>
+  mutate(error = observado - prediccion) |>
+  select(anio, modelo, error) |>
+  pivot_wider(names_from = modelo, values_from = error) |>
+  mutate(anio = as.character(anio)) %>% 
+  knitr::kable(digits = 0, format.args = list(big.mark = " "), booktabs = TRUE)
+```
 
 
 
 
 
-cargar librerias:
 
 
-
-## codigo de los modelos
+**Repositorio del proyecto:**
+[https://github.com/Jerald-vm/proyecto-individual](https://github.com/Jerald-vm/proyecto-individual)
 
 
