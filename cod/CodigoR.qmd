@@ -31,26 +31,26 @@ execute:
 \begin{center}
 \textbf{Universidad de Costa Rica}\\
 \textbf{Curso: Herramientas de Datos I}\\[0.4em]
-\textbf{Cosecha de cafe}\\
+\textbf{Cosecha de café}\\
 Predicción de la Cosecha de Café en Costa Rica mediante Modelos Estadísticos en R\\[0.35em]
 \textbf{Estudiante a cargo}\\
 Jerald Valverde Mora\\
 23 de noviembre de 2026
 \end{center}
 
-# Introduccion
+# Introducción
 
-El cafe es uno de los productos agricolas mas importantes en la historia de Costa Rica, no solo por su impacto como producto, sino como componente primorial de la historia y uno de los motores economicos del pais a traves de los anos. Al ser un producto agricola, la cantidad que se produce de este esta sujeto a distintas variables que pueden cambiar a lo largo del tiempo; algunos de ellos son los factores climaticos, de mercado y la bienalidad de la planta. La produccion total ha seguido una tendencia a que las cosechas que se producen en cada temporada sean fluctuantes y tiendan a tener valores cada vez mas bajos, estando en 2.5 millones en 1994 y bajando a 1.38 millones de sacos de 60kg en 2025 (ICAFE, pag. 88, 2025).
+El café es uno de los productos agrícolas más importantes en la historia de Costa Rica, no solo por su impacto como producto, sino como componente primorial de la historia y uno de los motores económicos del país a través de los años. Al ser un producto agrícola, la cantidad que se produce de este está sujeto a distintas variables que pueden cambiar a lo largo del tiempo; algunos de ellos son los factores climáticos, de mercado y la bienalidad de la planta. La producción total ha seguido una tendencia tal que las cosechas que se producen en cada temporada sean fluctuantes y tiendan a tener valores cada vez más bajos, estando en 2.5 millones en 1994 y bajando a 1.38 millones de sacos de 60kg en 2025 (ICAFE, pag. 88, 2025).
   
-La intencion de este proyecto es anticipar el volumen de cada cosecha para productores, exportadores y beneficiadores; asi como, interpretar el ejercicio habitual que realiza la OIC (Organizacion Internacional del Cafe), que estima la produccion de cafe. La propuesta es estimar la cosecha nacional 2026-2027 con tres modelos estadísticos en R, a partir de la producción y el precio del ICAFE, el clima de NASA POWER y un indicador del fenómeno ENOS de la NOAA.
+La intención de este proyecto es anticipar el volumen de cada cosecha para productores, exportadores y beneficiadores; así como, interpretar el ejercicio habitual que realiza la OIC (Organizacion Internacional del Café), que estima la producción de café. La propuesta es estimar la cosecha nacional 2026-2027 con tres modelos estadísticos en R, a partir de la producción y el precio del ICAFE, el clima de NASA POWER y un indicador del fenómeno ENOS de la NOAA.
 
 # Objetivo General
 
 Desarrollar y comparar tres modelos en R (regresión lineal , regresión Ridge y árbol de regresión) que permitan estimar el volumen de la cosecha nacional de café de Costa Rica para el periodo 2026-2027, a partir de variables climáticas, de mercado y del comportamiento histórico de la producción.
 
-# Metodologia
+# Metodología
 
-## Obtencion y tratamiento de los datos
+## Obtención y tratamiento de los datos
 
 La producción nacional de café y el precio de exportación provienen del Informe sobre la Actividad Cafetalera de Costa Rica del Instituto del Café de Costa Rica (ICAFE, 2025), entidad reguladora del sector según la Ley N.º 2762 de 1961, que reporta estas series por cosecha desde 1994-1995. El ICAFE expresa la producción en sacos de 46 kg, por lo que se convirtió a sacos de 60 kg, estándar internacional. Las tablas se extrajeron directamente del informe en PDF.
 
@@ -58,33 +58,33 @@ Los datos climáticos (precipitación (mm/dia) y temperatura medias (°C) de abr
 
 ## Construcción de variables
 
-Cada cosecha se asocia a su ano de inicio: la cosecha 2023-2024 se asocia al año 2023, de esta manera; el clima y el RONI se usan del periodo de abril a octubre del ano respectivo a la recoleccion. Como variable respuesta se da la produccion nacional en sacos de 60kg, que se obtiene al multiplicar el cafe oro dado en sacos de 46kg por 46/60. Se descartan las exportaciones, el consumo nacional y el rendimiento como predictores ya que se calculan a partir de la misma cosecha que se pretende estimar. los datos climaticos (precipitacion y temperatura) se promedian sobre los meses mencionados de cada ano, asi como el RONI. Para tomar la bienalidad se incluye la produccion de la cosecha anterior como variable rezagada, igual manera el precio, ya que este se conoce una vez terminada la cosecha. Al tomar este rezago se pierde la primera cosecha, por lo que se contemplan $n = 31$ observaciones completas. los datos predictores se estandarizaron antes de ajustar la regresion de Ridge ya que es sensible a la escala. La cosecha 2026-2027 se proyecta con el clima y el RONI de 2026 y la producción y el precio de la cosecha 2025-2026.
+Cada cosecha se asocia a su año de inicio: la cosecha 2023-2024 se asocia al año 2023, de esta manera; el clima y el RONI se usan del período de abril a octubre del año respectivo a la recolección. Como variable respuesta se da la producción nacional en sacos de 60kg, que se obtiene al multiplicar el café oro (dado en sacos de 46kg por 46/60). Se descartan las exportaciones, el consumo nacional y el rendimiento como predictores ya que se calculan a partir de la misma cosecha que se pretende estimar. los datos climáticos (precipitación y temperatura) se promedian sobre los meses mencionados de cada año, así como el RONI. Para tomar la bienalidad se incluye la producción de la cosecha anterior como variable rezagada, igual manera el precio, ya que este se conoce una vez terminada la cosecha. Al tomar este rezago se pierde la primera cosecha, por lo que se contemplan $n = 30$ observaciones completas. Los datos predictores se estandarizaron antes de ajustar la regresión de Ridge, ya que es sensible a la escala. La cosecha 2026-2027 se proyecta con el clima y el RONI de 2026 y la producción y el precio de la cosecha 2025-2026.
 
 ## Modelos
 
-### regresion lineal
+### Regresión lineal
 
-modela la relación de dependencia entre una variable dependiente (lo que se desea predecir, Y) y una o más variables independientes (las predictoras, X) mediante una línea recta o superficie. Es el modelo base, interpretable y parsimonioso.
+Modela la relación de dependencia entre una variable dependiente (lo que se desea predecir, Y) y una o más variables independientes (las predictoras, X) mediante una línea recta o superficie. Es el modelo base, interpretable y parsimonioso.
 
-### regresion ridge
+### Regresión de Ridge
 
-Es una técnica de regresión estadística que se utiliza para corregir el sobreajuste y lidiar con la multicolinealidad (cuando las variables independientes están muy correlacionadas entre sí) (IBM, 2026). Se utiliza porque el rendimiento agricola depende de muchas variables que estan fuertemente conectadas entre si (multicolinealidad).
+Es una técnica de regresión estadística que se utiliza para corregir el sobreajuste y lidiar con la multicolinealidad (cuando las variables independientes están muy correlacionadas entre sí) (IBM, 2026). Se utiliza porque el clima y el RONI están correlacionados y se dispone de pocas cosechas.
 $$
 \text{RSS}_{\text{Ridge}}=\sum _{i=1}^{n}(y_{i}-\hat{y}_{i})^{2}+\lambda \sum _{j=1}^{p}\beta _{j}^{2}
 $$
-Donde $λ$ controla el nivel de penalizacion, se toma por validacion cruzada, $y_{i}$ es la cosecha real observada, $\hat{y}_{i}$ es la cosecha predicha por el modelo. y $p$ la cantidad de variables predictoras.
+donde $n$ es el número de cosechas, $y_i$ la cosecha observada, $\hat{y}_i$ la predicha por el modelo, $p$ el número de variables predictoras, $\beta_j$ el coeficiente de la variable $j$ y $\lambda$ el parámetro que controla la penalización. Un $\lambda$ mayor reduce más los coeficientes, y se elige por validación cruzada.
 
-### arbol de regresion
+### Árbol de Regresión
 
-Divide las cosechas en grupos mediante reglas sucesivas sobre las variables y predice con el promedio de cada grupo (James et al., 2021)”. Este se utiliza porque no asume la linealidad de las variables y las reglas que utiliza son faciles de interpretar. Es un poco inestable con pocos datos.
+Divide las cosechas en grupos mediante reglas sucesivas sobre las variables y predice con el promedio de cada grupo (James et al., 2021)”. Este se utiliza porque no asume la linealidad de las variables y las reglas que utiliza son fáciles de interpretar. Es un poco inestable con pocos datos.
 
-### referencia ingenua
+### Referencia ingenua
 
-Como referencia se usa el método ingenuo (Hyndman y Athanasopoulos, 2021), que pronostica cada cosecha con el valor observado en la cosecha del periodo anterior: $\hat{y}_{t+1} = y_t$
+Como referencia se usa el método ingenuo (Hyndman y Athanasopoulos, 2021), que pronostica cada cosecha con el valor observado en la cosecha del período anterior: $\hat{y}_{t+1} = y_t$
 
 ## Validación
 
-El desempeño de los modelos se evalua mediante la tecnica del backtesting con ventana creciente, que utiliza los datos del pasado para medir su comportamiento. Se ajusta cada modelo con las cosechas hasta el año $t$ y se predice la cosecha $t+1$, repitiendo el proceso desde las primeras 15 observaciones hasta la última cosecha disponible. Con las $n$ predicciones resultantes se calculan la raíz del error cuadrático medio (RMSE), el error absoluto medio (MAE) y el coeficiente de determinación fuera de muestra ($R^2$):
+El desempeño de los modelos se evalua mediante la técnica del backtesting con ventana creciente, que utiliza los datos del pasado para medir su comportamiento. Se ajusta cada modelo con las cosechas hasta el año $t$ y se predice la cosecha $t+1$, repitiendo el proceso desde las primeras 15 observaciones hasta la última cosecha disponible. Con las $n$ predicciones resultantes se calculan la raíz del error cuadrático medio (RMSE), el error absoluto medio (MAE) y el coeficiente de determinación fuera de muestra ($R^2$):
 
 $$RMSE=\sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i-\hat{y}_i)^2},\quad MAE=\frac{1}{n}\sum_{i=1}^{n}\left|y_i-\hat{y}_i\right|,\quad R^2=1-\frac{\sum_{i=1}^{n}(y_i-\hat{y}_i)^2}{\sum_{i=1}^{n}(y_i-\bar{y})^2}$$
 donde $\bar{y}$ es la media de lo observado. El RMSE penaliza los errores grandes, el MAE indica el error promedio, ambos se expresan en sacos de 60 kg.  El $R^2$ fuera de muestra puede tomar valores negativos cuando el modelo predice peor que la media. Como referencia se incluye el método ingenuo, que pronostica cada cosecha con la anterior (Hyndman y Athanasopoulos, 2021). Para proyectar la cosecha 2026-2027 se selecciona el modelo con menor RMSE.
@@ -357,6 +357,12 @@ metricas <- metricas(backtest)
 #proyeccion futura 2026-2027
 
 modelos_finales <- ajuste(tabla_modelo)
+
+# R2 dentro de la muestra: modelos finales evaluados con las mismas cosechas con que se ajustaron
+r2_dentro <- prediccion_modelos(modelos_finales, tabla_modelo) |>
+  left_join(select(tabla_modelo, cosecha, observado = produccion_sacos_60kg), by = "cosecha") |>
+  group_by(modelo) |>
+  summarise(r2_dentro = 1 - sum((observado - prediccion)^2) / sum((observado - mean(observado))^2))
  
 # El modelo elegido es el de menor RMSE entre los tres modelos (sin el ingenuo)
 modelo_elegido <- metricas |>
@@ -383,6 +389,7 @@ proyeccion <- prediccion_modelos(modelos_finales, fila_proyeccion) |>
 fmt <- function(x) format(round(x), big.mark = " ", scientific = FALSE)
 rmse <- set_names(metricas$rmse, metricas$modelo)
 r2 <- set_names(metricas$r_cuadrado, metricas$modelo)
+r2_in <- set_names(r2_dentro$r2_dentro, r2_dentro$modelo)
 proy <- set_names(proyeccion$prediccion, proyeccion$modelo)
 serie <- datos_modelo |> filter(!is.na(produccion_sacos_60kg)) |> arrange(anio)
 ultima_cosecha <- tail(serie$produccion_sacos_60kg, 1)
@@ -405,7 +412,7 @@ ggplot(serie, aes(anio, produccion_sacos_60kg / 1e6)) +
   labs(x = "Año de inicio de la cosecha", y = "Millones de sacos de 60 kg") +
   theme_minimal(base_size = 10)
 ```
-En la (@fig-produccion) se observa como la produccion nacional pasa de `r fmt(serie$produccion_sacos_60kg[1])` sacos de 60 kg en la cosecha 1994-1995 a `r fmt(ultima_cosecha)` en 2025-2026. Por otra parte, en la (@fig-predictores) se logra evidenciar como hay una relacion contraria con la produccion de las variables predictores de la lluvia y el precio, es decir, si la produccion de cafe baja se ve reflejado en que hubo tendencia al aumento de las lluvias y por ende, un aumento en el precio. Esto se evidencia con el precio rezagado (r = `r round(correlaciones["produccion_anterior", "precio_anterior"], 2)`) y con la lluvia (r = `r round(correlaciones["produccion_anterior", "lluvia_promedio_mm_dia"], 2)`)
+En la (@fig-produccion) se observa como la producción nacional pasa de `r fmt(serie$produccion_sacos_60kg[1])` sacos de 60 kg en la cosecha 1994-1995 a `r fmt(ultima_cosecha)` en 2025-2026. Por otra parte, en la (@fig-predictores) se logra evidenciar cómo hay una relación contraria con la producción de las variables predictores de la lluvia y el precio, es decir, si la producción de café baja se ve reflejado en que hubo tendencia al aumento de las lluvias y por ende, un aumento en el precio. Esto se evidencia con el precio rezagado (r = `r round(correlaciones["produccion_anterior", "precio_anterior"], 2)`) y con la lluvia (r = `r round(correlaciones["produccion_anterior", "lluvia_promedio_mm_dia"], 2)`)
 
 
 ```{r}
@@ -433,7 +440,7 @@ datos_modelo |>
 
 ## Resultados de los modelos
 
-@tbl-metricas se observa un resumen del backtesting utilizado para comprobar el rendimiento de los modelos. El método ingenuo obtuvo el menor error (RMSE de `r fmt(rmse["Ingenuo"])` sacos), seguido del árbol (`r fmt(rmse["Árbol"])`), Ridge (`r fmt(rmse["Ridge"])`) y el modelo lineal (`r fmt(rmse["Lineal"])`), y los cuatro tuvieron un $R^2$ fuera de muestra negativo. el metodo ingenuo tiene un desempeño que se explica porque la produccion de una cosecha depende de lo que haya pasado con la cosecha anterior, ambas tienen una correlación de `r round(cor(tabla_modelo$produccion_anterior, tabla_modelo$produccion_sacos_60kg), 2)`. En el modelo lineal de todas las variables predictoras la produccion anterior es a unica significativa. Sabiendo que paso con la cosecha anterior, los demas modelos las reducen obteniendo asi un error con poca mejora de la prediccion. Como el metodo ingenuo se ajusta de inmediato, no tiene el costo de saber que paso con las cosechas antiguas, mientras que los entrenados tienden a sobrepredecir cuando la produccion baja @fig-backtest.
+En @tbl-metricas se observa un resumen del backtesting utilizado para comprobar el rendimiento de los modelos. El método ingenuo obtuvo el menor error (RMSE de `r fmt(rmse["Ingenuo"])` sacos), seguido del árbol (`r fmt(rmse["Árbol"])`), Ridge (`r fmt(rmse["Ridge"])`) y el modelo lineal (`r fmt(rmse["Lineal"])`), y los cuatro tuvieron un $R^2$ fuera de muestra negativo. En cambio, el $R^2$ dentro de la muestra fue de `r round(r2_in["Lineal"], 2)` en el modelo lineal, `r round(r2_in["Ridge"], 2)` en Ridge y `r round(r2_in["Árbol"], 2)` en el árbol: los modelos reproducen bien las cosechas con las que se ajustaron, pero no logran predecir las nuevas, lo que indica sobreajuste. El método ingenuo tiene un desempeño que se explica porque la producción de una cosecha depende de lo que haya pasado con la cosecha anterior, ambas tienen una correlación de `r round(cor(tabla_modelo$produccion_anterior, tabla_modelo$produccion_sacos_60kg), 2)`. En el modelo lineal de todas las variables predictoras la producción anterior es a única significativa. Sabiendo que pasó con la cosecha anterior, los demás modelos las reducen obteniendo asi un error con poca mejora de la predicción. Como el método ingenuo se ajusta de inmediato, no tiene el costo de saber que paso con las cosechas antiguas, mientras que los entrenados tienden a sobrepredecir cuando la producción como muestra la @fig-backtest.
 
 
 ```{r}
@@ -442,9 +449,11 @@ datos_modelo |>
 #| tbl-pos: "H"
 # Métricas por modelo, ordenadas por RMSE
 metricas |>
+  left_join(r2_dentro, by = "modelo") |>
+  select(modelo, rmse, mae, r2_dentro, r_cuadrado) |>
   knitr::kable(
-    col.names = c("Modelo", "RMSE", "MAE", "$R^2$ fuera de muestra"),
-    digits = c(0, 0, 0, 2),
+    col.names = c("Modelo", "RMSE", "MAE", "$R^2$ dentro de muestra", "$R^2$ fuera de muestra"),
+    digits = c(0, 0, 0, 2, 2),
     format.args = list(big.mark = " "),
     booktabs = TRUE,
     escape = FALSE
@@ -496,8 +505,8 @@ proyeccion |>
 
 ## Conclusiones
 
-- Con los datos utilizados, los modelos no logran una mejora clara al metodo ingenuo, ya que con la cosecha anterior ya contiene casi toda la informacion predictiva. Aunque, los datos de los modelos se pueden usar para respaldar aun mas el metodo ingenuo.
-- la proyeccion de la cosecha 2026-2027 está entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg, con un margen de error amplio.
+- Con los datos utilizados, los modelos no logran una mejora clara al metodo ingenuo, ya que con la cosecha anterior ya contiene casi toda la información predictiva. Aunque, los datos de los modelos se pueden usar para respaldar aun más el método ingenuo.
+- La proyección de la cosecha 2026-2027 está entre `r fmt(min(proy))` y `r fmt(max(proy))` sacos de 60 kg, con un margen de error amplio.
 - Las 31 cosechas utilizadas no logran separar el efecto del clima, el RONI y el precio respecto a los predictores.
 
 
