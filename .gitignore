@@ -13,4 +13,3 @@ config/credenciales.yml
 
 # Resultados pesados (se regeneran) 
 res/*.html
-res/*.pdf
